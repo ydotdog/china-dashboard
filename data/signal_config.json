@@ -1,0 +1,102 @@
+{
+  "consumption_gdp": {
+    "type": "higher_is_better",
+    "green": 42,
+    "red": 37,
+    "noise_threshold": 0.3,
+    "name_zh": "居民消费占GDP比重",
+    "name_en": "Household Consumption % of GDP",
+    "unit": "%",
+    "source": "World Bank NE.CON.PRVT.ZS"
+  },
+  "social_security": {
+    "type": "higher_is_better",
+    "green": 12,
+    "red": 8,
+    "noise_threshold": 0.2,
+    "name_zh": "政府卫生支出占比",
+    "name_en": "Govt Health Spending % of Govt Expense",
+    "unit": "%",
+    "source": "World Bank SH.XPD.GHED.GE.ZS"
+  },
+  "oecd_cli": {
+    "type": "higher_is_better",
+    "green": 100,
+    "red": 97,
+    "noise_threshold": 0.1,
+    "name_zh": "OECD综合领先指标",
+    "name_en": "OECD Composite Leading Indicator",
+    "unit": "index",
+    "source": "FRED BSCICP03CNM665S"
+  },
+  "youth_unemployment": {
+    "type": "lower_is_better",
+    "green": 10,
+    "red": 18,
+    "noise_threshold": 0.5,
+    "name_zh": "青年失业率 (16-24岁)",
+    "name_en": "Youth Unemployment Rate",
+    "unit": "%",
+    "source": "FRED SLUEM1524ZSCHN (ILO)"
+  },
+  "savings_rate": {
+    "type": "lower_is_better",
+    "green": 40,
+    "red": 46,
+    "noise_threshold": 0.3,
+    "name_zh": "国民储蓄率",
+    "name_en": "Gross Savings % of GDP",
+    "unit": "%",
+    "source": "World Bank NY.GNS.ICTR.ZS"
+  },
+  "urbanization": {
+    "type": "higher_is_better",
+    "green": 68,
+    "red": 60,
+    "noise_threshold": 0.2,
+    "name_zh": "城镇化率",
+    "name_en": "Urban Population %",
+    "unit": "%",
+    "source": "World Bank SP.URB.TOTL.IN.ZS"
+  },
+  "fx_reserves": {
+    "type": "higher_is_better",
+    "green": 3.2,
+    "red": 2.8,
+    "noise_threshold": 0.01,
+    "name_zh": "外汇储备",
+    "name_en": "FX Reserves (Trillions USD)",
+    "unit": "万亿$",
+    "source": "FRED TRESEGCNM052N"
+  },
+  "nontax_revenue": {
+    "type": "lower_is_better",
+    "green": 5,
+    "red": 10,
+    "noise_threshold": 0.2,
+    "name_zh": "非税收入占比",
+    "name_en": "Non-Tax Revenue % of Revenue",
+    "unit": "%",
+    "source": "World Bank GC.REV.GOTR.ZS"
+  },
+  "trade_hhi": {
+    "type": "lower_is_better",
+    "green": 0.08,
+    "red": 0.15,
+    "noise_threshold": 0.005,
+    "name_zh": "贸易集中度 (HHI)",
+    "name_en": "Trade Concentration Index",
+    "unit": "HHI",
+    "source": "UN Comtrade"
+  },
+  "exchange_rate": {
+    "type": "lower_is_better",
+    "green": 7.0,
+    "red": 7.5,
+    "noise_threshold": 0.02,
+    "name_zh": "美元/人民币汇率",
+    "name_en": "USD/CNY Exchange Rate",
+    "unit": "",
+    "source": "FRED DEXCHUS"
+  }
+}

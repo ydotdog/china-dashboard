@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中国关键指标观测台</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #0a0e17;
+  color: #c8d6e5;
+  min-height: 100vh;
+}
+.header {
+  text-align: center;
+  padding: 32px 20px 16px;
+  border-bottom: 1px solid #1a2035;
+}
+.header h1 {
+  font-size: 24px;
+  color: #e8ecf1;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+.header .subtitle {
+  font-size: 13px;
+  color: #5a6a7e;
+  margin-top: 6px;
+}
+
+/* Signal Summary Panel */
+.signal-panel {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 20px 24px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+}
+.signal-panel .title {
+  font-size: 14px;
+  color: #8892a4;
+  margin-bottom: 12px;
+}
+.signal-overall {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.signal-dots {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.signal-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.signal-group-label {
+  font-size: 11px;
+  color: #5a6a7e;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.signal-group-dots {
+  display: flex;
+  gap: 8px;
+}
+.signal-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2a3040;
+  position: relative;
+  cursor: pointer;
+}
+.signal-dot.green { background: #10b981; box-shadow: 0 0 8px #10b98155; }
+.signal-dot.yellow { background: #f59e0b; box-shadow: 0 0 8px #f59e0b55; }
+.signal-dot.red { background: #ef4444; box-shadow: 0 0 8px #ef444455; }
+.signal-dot .tooltip {
+  display: none;
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  border: 1px solid #374151;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  color: #e5e7eb;
+}
+.signal-dot:hover .tooltip { display: block; }
+.signal-counts {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.signal-counts span { display: flex; align-items: center; gap: 4px; }
+.cnt-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.cnt-dot.g { background: #10b981; }
+.cnt-dot.y { background: #f59e0b; }
+.cnt-dot.r { background: #ef4444; }
+
+/* Layers */
+.layer {
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 0 16px;
+}
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1a2035;
+}
+.layer-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.layer-1 .layer-num { background: #3b82f6; }
+.layer-2 .layer-num { background: #f59e0b; }
+.layer-3 .layer-num { background: #8b5cf6; }
+.layer-4 .layer-num { background: #ef4444; }
+.layer-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e8ecf1;
+}
+.layer-subtitle {
+  font-size: 12px;
+  color: #5a6a7e;
+}
+
+/* Cards Grid */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+
+.card {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: #374151; }
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+.card-signal {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2a3040;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.card-signal.green { background: #10b981; box-shadow: 0 0 6px #10b98155; }
+.card-signal.yellow { background: #f59e0b; box-shadow: 0 0 6px #f59e0b55; }
+.card-signal.red { background: #ef4444; box-shadow: 0 0 6px #ef444455; }
+.card-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f3f4f6;
+  margin: 4px 0;
+}
+.card-direction {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.dir-improving { color: #10b981; }
+.dir-worsening { color: #ef4444; }
+.dir-stable { color: #6b7280; }
+.card-chart {
+  width: 100%;
+  height: 180px;
+}
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #4b5563;
+  margin-top: 6px;
+}
+.card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.footer {
+  text-align: center;
+  padding: 32px 20px;
+  font-size: 11px;
+  color: #374151;
+  border-top: 1px solid #1a2035;
+  margin-top: 40px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>中国关键指标观测台</h1>
+  <div class="subtitle">China Structural Indicators Dashboard &mdash; 数据自动更新</div>
+</div>
+
+<div class="signal-panel" id="signalPanel">
+  <div class="title">系统信号总览 SIGNAL OVERVIEW</div>
+  <div class="signal-overall" id="overallSignal">加载中...</div>
+  <div class="signal-dots" id="signalDots"></div>
+  <div class="signal-counts" id="signalCounts"></div>
+</div>
+
+<!-- Layer 1 -->
+<div class="layer layer-1">
+  <div class="layer-header">
+    <div class="layer-num">1</div>
+    <div>
+      <div class="layer-title">经济体制方向信号</div>
+      <div class="layer-subtitle">Economic System Direction — 在走向改革还是走向僵化？</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card" id="card-consumption_gdp">
+      <div class="card-top"><span class="card-title">居民消费占GDP比重</span><span class="card-signal" id="sig-consumption_gdp"></span></div>
+      <div class="card-value" id="val-consumption_gdp">--</div>
+      <div class="card-direction" id="dir-consumption_gdp"></div>
+      <div class="card-chart" id="chart-consumption_gdp"></div>
+      <div class="card-meta"><span>World Bank NE.CON.PRVT.ZS</span><span id="date-consumption_gdp"></span></div>
+    </div>
+    <div class="card" id="card-social_security">
+      <div class="card-top"><span class="card-title">政府卫生支出占比</span><span class="card-signal" id="sig-social_security"></span></div>
+      <div class="card-value" id="val-social_security">--</div>
+      <div class="card-direction" id="dir-social_security"></div>
+      <div class="card-chart" id="chart-social_security"></div>
+      <div class="card-meta"><span>World Bank SH.XPD.GHED.GE.ZS</span><span id="date-social_security"></span></div>
+    </div>
+    <div class="card" id="card-oecd_cli">
+      <div class="card-top"><span class="card-title">OECD综合领先指标</span><span class="card-signal" id="sig-oecd_cli"></span></div>
+      <div class="card-value" id="val-oecd_cli">--</div>
+      <div class="card-direction" id="dir-oecd_cli"></div>
+      <div class="card-chart" id="chart-oecd_cli"></div>
+      <div class="card-meta"><span>FRED BSCICP03CNM665S</span><span id="date-oecd_cli"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Layer 2 -->
+<div class="layer layer-2">
+  <div class="layer-header">
+    <div class="layer-num">2</div>
+    <div>
+      <div class="layer-title">社会压力温度计</div>
+      <div class="layer-subtitle">Social Pressure Thermometer — 离临界点有多远？</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card" id="card-youth_unemployment">
+      <div class="card-top"><span class="card-title">青年失业率 (16-24岁)</span><span class="card-signal" id="sig-youth_unemployment"></span></div>
+      <div class="card-value" id="val-youth_unemployment">--</div>
+      <div class="card-direction" id="dir-youth_unemployment"></div>
+      <div class="card-chart" id="chart-youth_unemployment"></div>
+      <div class="card-meta"><span>FRED SLUEM1524ZSCHN (ILO)</span><span id="date-youth_unemployment"></span></div>
+    </div>
+    <div class="card" id="card-savings_rate">
+      <div class="card-top"><span class="card-title">国民储蓄率</span><span class="card-signal" id="sig-savings_rate"></span></div>
+      <div class="card-value" id="val-savings_rate">--</div>
+      <div class="card-direction" id="dir-savings_rate"></div>
+      <div class="card-chart" id="chart-savings_rate"></div>
+      <div class="card-meta"><span>World Bank NY.GNS.ICTR.ZS</span><span id="date-savings_rate"></span></div>
+    </div>
+    <div class="card" id="card-urbanization">
+      <div class="card-top"><span class="card-title">城镇化率</span><span class="card-signal" id="sig-urbanization"></span></div>
+      <div class="card-value" id="val-urbanization">--</div>
+      <div class="card-direction" id="dir-urbanization"></div>
+      <div class="card-chart" id="chart-urbanization"></div>
+      <div class="card-meta"><span>World Bank SP.URB.TOTL.IN.ZS</span><span id="date-urbanization"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Layer 3 -->
+<div class="layer layer-3">
+  <div class="layer-header">
+    <div class="layer-num">3</div>
+    <div>
+      <div class="layer-title">政治方向风向标</div>
+      <div class="layer-subtitle">Political Direction Indicators — 系统在开放还是在收紧？</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card" id="card-fx_reserves">
+      <div class="card-top"><span class="card-title">外汇储备</span><span class="card-signal" id="sig-fx_reserves"></span></div>
+      <div class="card-value" id="val-fx_reserves">--</div>
+      <div class="card-direction" id="dir-fx_reserves"></div>
+      <div class="card-chart" id="chart-fx_reserves"></div>
+      <div class="card-meta"><span>FRED TRESEGCNM052N</span><span id="date-fx_reserves"></span></div>
+    </div>
+    <div class="card" id="card-info_space">
+      <div class="card-top"><span class="card-title">信息空间松紧 (审查新闻热度)</span><span class="card-signal" id="sig-info_space"></span></div>
+      <div class="card-value" id="val-info_space">--</div>
+      <div class="card-direction" id="dir-info_space"></div>
+      <div class="card-chart" id="chart-info_space"></div>
+      <div class="card-meta"><span>GDELT: censorship china internet</span><span id="date-info_space"></span></div>
+    </div>
+    <div class="card" id="card-nontax_revenue">
+      <div class="card-top"><span class="card-title">非税收入占比</span><span class="card-signal" id="sig-nontax_revenue"></span></div>
+      <div class="card-value" id="val-nontax_revenue">--</div>
+      <div class="card-direction" id="dir-nontax_revenue"></div>
+      <div class="card-chart" id="chart-nontax_revenue"></div>
+      <div class="card-meta"><span>World Bank GC.REV.GOTR.ZS</span><span id="date-nontax_revenue"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Layer 4 -->
+<div class="layer layer-4">
+  <div class="layer-header">
+    <div class="layer-num">4</div>
+    <div>
+      <div class="layer-title">地缘政治红线</div>
+      <div class="layer-subtitle">Geopolitical Red Lines — 外部冲击是否在加速？</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card" id="card-military">
+      <div class="card-top"><span class="card-title">中美军事互动热度</span><span class="card-signal" id="sig-military"></span></div>
+      <div class="card-value" id="val-military">--</div>
+      <div class="card-direction" id="dir-military"></div>
+      <div class="card-chart" id="chart-military"></div>
+      <div class="card-meta"><span>GDELT: china united states military</span><span id="date-military"></span></div>
+    </div>
+    <div class="card" id="card-trade_hhi">
+      <div class="card-top"><span class="card-title">贸易集中度 (HHI)</span><span class="card-signal" id="sig-trade_hhi"></span></div>
+      <div class="card-value" id="val-trade_hhi">--</div>
+      <div class="card-direction" id="dir-trade_hhi"></div>
+      <div class="card-chart" id="chart-trade_hhi"></div>
+      <div class="card-meta"><span>UN Comtrade</span><span id="date-trade_hhi"></span></div>
+    </div>
+    <div class="card" id="card-exchange_rate">
+      <div class="card-top"><span class="card-title">美元/人民币汇率</span><span class="card-signal" id="sig-exchange_rate"></span></div>
+      <div class="card-value" id="val-exchange_rate">--</div>
+      <div class="card-direction" id="dir-exchange_rate"></div>
+      <div class="card-chart" id="chart-exchange_rate"></div>
+      <div class="card-meta"><span>FRED DEXCHUS</span><span id="date-exchange_rate"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  数据来源：World Bank, FRED, GDELT, UN Comtrade &mdash; 自动更新 &mdash; 仅供研究参考
+</div>
+
+<script>
+const BASE = '';
+const charts = {};
+const LAYERS = [
+  { label: '经济体制', keys: ['consumption_gdp', 'social_security', 'oecd_cli'] },
+  { label: '社会压力', keys: ['youth_unemployment', 'savings_rate', 'urbanization'] },
+  { label: '政治方向', keys: ['fx_reserves', 'info_space', 'nontax_revenue'] },
+  { label: '地缘政治', keys: ['military', 'trade_hhi', 'exchange_rate'] },
+];
+const ALL_KEYS = LAYERS.flatMap(l => l.keys);
+
+const NAMES = {
+  consumption_gdp: '消费/GDP', social_security: '卫生支出', oecd_cli: 'OECD CLI',
+  youth_unemployment: '青年失业', savings_rate: '储蓄率', urbanization: '城镇化',
+  fx_reserves: '外储', info_space: '信息空间', nontax_revenue: '非税收入',
+  military: '军事互动', trade_hhi: '贸易HHI', exchange_rate: '汇率',
+};
+
+const DIR_TEXT = { improving: '趋势改善', worsening: '趋势恶化', stable: '趋势持平' };
+const DIR_ARROW = { improving: ' \u2191', worsening: ' \u2193', stable: ' \u2192' };
+
+function darkTheme() {
+  return {
+    grid: { top: 10, right: 10, bottom: 24, left: 46 },
+    xAxis: { axisLine: { lineStyle: { color: '#2a3040' } }, axisLabel: { color: '#5a6a7e', fontSize: 10 }, splitLine: { show: false } },
+    yAxis: { axisLine: { show: false }, axisLabel: { color: '#5a6a7e', fontSize: 10 }, splitLine: { lineStyle: { color: '#1a2035' } } },
+    tooltip: { backgroundColor: '#1f2937', borderColor: '#374151', textStyle: { color: '#e5e7eb', fontSize: 12 } },
+  };
+}
+
+function makeAreaChart(el, dates, values, color) {
+  const c = echarts.init(el);
+  const t = darkTheme();
+  c.setOption({
+    ...t,
+    xAxis: { ...t.xAxis, type: 'category', data: dates, boundaryGap: false },
+    yAxis: { ...t.yAxis, type: 'value', scale: true },
+    tooltip: { ...t.tooltip, trigger: 'axis' },
+    series: [{
+      type: 'line', data: values, smooth: true, symbol: 'none',
+      lineStyle: { color, width: 2 },
+      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: color + '44' }, { offset: 1, color: color + '05' }] } },
+    }],
+  });
+  return c;
+}
+
+function makeBarChart(el, dates, values, color, refLine) {
+  const c = echarts.init(el);
+  const t = darkTheme();
+  const opts = {
+    ...t,
+    xAxis: { ...t.xAxis, type: 'category', data: dates },
+    yAxis: { ...t.yAxis, type: 'value', scale: true },
+    tooltip: { ...t.tooltip, trigger: 'axis' },
+    series: [{
+      type: 'bar', data: values.map(v => ({
+        value: v,
+        itemStyle: { color: v >= (refLine || 0) ? '#10b981' : '#ef4444' },
+      })),
+      barMaxWidth: 20,
+    }],
+  };
+  if (refLine !== undefined) {
+    opts.series.push({
+      type: 'line', data: values.map(() => refLine), symbol: 'none',
+      lineStyle: { color: '#f59e0b88', type: 'dashed', width: 1 },
+    });
+  }
+  c.setOption(opts);
+  return c;
+}
+
+function makeDualAxisChart(el, dates, values1, values2, label1, label2, color1, color2) {
+  const c = echarts.init(el);
+  const t = darkTheme();
+  c.setOption({
+    grid: { top: 24, right: 50, bottom: 24, left: 50 },
+    legend: { data: [label1, label2], textStyle: { color: '#5a6a7e', fontSize: 10 }, top: 0 },
+    xAxis: { ...t.xAxis, type: 'category', data: dates, boundaryGap: false },
+    yAxis: [
+      { ...t.yAxis, type: 'value', scale: true, position: 'left' },
+      { ...t.yAxis, type: 'value', scale: true, position: 'right' },
+    ],
+    tooltip: { ...t.tooltip, trigger: 'axis' },
+    series: [
+      { name: label1, type: 'line', data: values1, smooth: true, symbol: 'none', lineStyle: { color: color1, width: 2 }, yAxisIndex: 0 },
+      { name: label2, type: 'line', data: values2, smooth: true, symbol: 'none', lineStyle: { color: color2, width: 2 }, yAxisIndex: 1 },
+    ],
+  });
+  return c;
+}
+
+function setSignal(key, sig) {
+  const dot = document.getElementById('sig-' + key);
+  const val = document.getElementById('val-' + key);
+  const dir = document.getElementById('dir-' + key);
+  const date = document.getElementById('date-' + key);
+  if (!sig || sig.error) {
+    if (val) val.textContent = 'N/A';
+    return;
+  }
+  if (dot) { dot.className = 'card-signal ' + (sig.level || ''); }
+  if (val) {
+    let v = sig.value;
+    if (typeof v === 'number') {
+      if (Math.abs(v) >= 1000) v = v.toLocaleString('en', { maximumFractionDigits: 0 });
+      else if (Math.abs(v) < 0.01) v = v.toFixed(6);
+      else v = v.toFixed(2);
+    }
+    val.textContent = v;
+  }
+  if (dir && sig.direction) {
+    dir.textContent = (DIR_TEXT[sig.direction] || '') + (DIR_ARROW[sig.direction] || '');
+    dir.className = 'card-direction dir-' + sig.direction;
+  }
+  if (date && sig.latest_date) date.textContent = sig.latest_date;
+}
+
+function renderSignalPanel(data) {
+  if (!data || !data.signals) return;
+  const { signals, summary } = data;
+
+  // Overall
+  const el = document.getElementById('overallSignal');
+  const labels = { reform_convergence: '改革信号汇聚', stress_convergence: '压力信号汇聚', mixed: '信号混杂' };
+  const colors = { reform_convergence: '#10b981', stress_convergence: '#ef4444', mixed: '#f59e0b' };
+  el.textContent = labels[summary.overall] || summary.overall;
+  el.style.color = colors[summary.overall] || '#c8d6e5';
+
+  // Dots
+  const container = document.getElementById('signalDots');
+  container.innerHTML = '';
+  LAYERS.forEach(layer => {
+    const group = document.createElement('div');
+    group.className = 'signal-group';
+    group.innerHTML = `<div class="signal-group-label">${layer.label}</div><div class="signal-group-dots"></div>`;
+    const dotsDiv = group.querySelector('.signal-group-dots');
+    layer.keys.forEach(key => {
+      const s = signals[key] || {};
+      const dot = document.createElement('div');
+      dot.className = 'signal-dot ' + (s.level || '');
+      dot.innerHTML = `<div class="tooltip">${NAMES[key] || key}: ${s.level === 'green' ? '积极' : s.level === 'red' ? '消极' : '中性'}</div>`;
+      dotsDiv.appendChild(dot);
+    });
+    container.appendChild(group);
+  });
+
+  // Counts
+  const counts = document.getElementById('signalCounts');
+  counts.innerHTML = `
+    <span><span class="cnt-dot g"></span> ${summary.green} 积极</span>
+    <span><span class="cnt-dot y"></span> ${summary.yellow} 中性</span>
+    <span><span class="cnt-dot r"></span> ${summary.red} 消极</span>
+  `;
+}
+
+// ---- Data Fetching ----
+async function fetchJSON(url) {
+  const r = await fetch(BASE + url);
+  return r.json();
+}
+
+async function loadSignals() {
+  try {
+    const data = await fetchJSON('/api/signals');
+    renderSignalPanel(data);
+    if (data.signals) {
+      ALL_KEYS.forEach(k => setSignal(k, data.signals[k]));
+    }
+  } catch (e) { console.error('signals:', e); }
+}
+
+async function loadChart(key, fetcher, renderer) {
+  try {
+    const data = await fetcher();
+    if (!data || data.error || (Array.isArray(data) && data.length === 0)) {
+      document.getElementById('chart-' + key).innerHTML = '<div class="card-loading">暂无数据</div>';
+      return;
+    }
+    renderer(data);
+  } catch (e) {
+    console.error(key + ':', e);
+    document.getElementById('chart-' + key).innerHTML = '<div class="card-loading">加载失败</div>';
+  }
+}
+
+function renderWBChart(key, data, color) {
+  const dates = data.map(d => d.date);
+  const values = data.map(d => d.value);
+  charts[key] = makeAreaChart(document.getElementById('chart-' + key), dates, values, color);
+}
+
+function renderFREDChart(key, data, color, transform) {
+  let dates = data.map(d => d.date);
+  let values = data.map(d => transform ? transform(d.value) : d.value);
+  charts[key] = makeAreaChart(document.getElementById('chart-' + key), dates, values, color);
+}
+
+async function loadAllCharts() {
+  // Layer 1
+  loadChart('consumption_gdp',
+    () => fetchJSON('/api/worldbank/NE.CON.PRVT.ZS'),
+    d => renderWBChart('consumption_gdp', d, '#3b82f6')
+  );
+  loadChart('social_security',
+    () => fetchJSON('/api/worldbank/SH.XPD.GHED.GE.ZS'),
+    d => renderWBChart('social_security', d, '#3b82f6')
+  );
+  loadChart('oecd_cli',
+    () => fetchJSON('/api/fred/BSCICP03CNM665S?years=10'),
+    d => {
+      const dates = d.map(x => x.date);
+      const vals = d.map(x => x.value);
+      const el = document.getElementById('chart-oecd_cli');
+      const c = echarts.init(el);
+      const t = darkTheme();
+      c.setOption({
+        ...t,
+        xAxis: { ...t.xAxis, type: 'category', data: dates, boundaryGap: false },
+        yAxis: { ...t.yAxis, type: 'value', scale: true },
+        tooltip: { ...t.tooltip, trigger: 'axis' },
+        series: [
+          { type: 'line', data: vals, smooth: true, symbol: 'none', lineStyle: { color: '#3b82f6', width: 2 } },
+          { type: 'line', data: vals.map(() => 100), symbol: 'none', lineStyle: { color: '#f59e0b55', type: 'dashed', width: 1 } },
+        ],
+      });
+      charts['oecd_cli'] = c;
+    }
+  );
+
+  // Layer 2
+  loadChart('youth_unemployment',
+    () => fetchJSON('/api/fred/SLUEM1524ZSCHN?years=15'),
+    d => renderFREDChart('youth_unemployment', d, '#f59e0b')
+  );
+  loadChart('savings_rate',
+    () => fetchJSON('/api/worldbank/NY.GNS.ICTR.ZS'),
+    d => renderWBChart('savings_rate', d, '#f59e0b')
+  );
+  loadChart('urbanization',
+    () => fetchJSON('/api/worldbank/SP.URB.TOTL.IN.ZS'),
+    d => renderWBChart('urbanization', d, '#f59e0b')
+  );
+
+  // Layer 3
+  loadChart('fx_reserves',
+    () => fetchJSON('/api/fred/TRESEGCNM052N?years=10'),
+    d => renderFREDChart('fx_reserves', d, '#8b5cf6', v => v / 1e6)
+  );
+  loadChart('info_space',
+    () => fetchJSON('/api/gdelt?query=censorship+china+internet&months=24'),
+    d => {
+      if (!Array.isArray(d)) return;
+      const dates = d.map(x => x.date);
+      const vals = d.map(x => x.value);
+      charts['info_space'] = makeAreaChart(document.getElementById('chart-info_space'), dates, vals, '#8b5cf6');
+    }
+  );
+  loadChart('nontax_revenue',
+    () => fetchJSON('/api/worldbank/GC.REV.GOTR.ZS'),
+    d => renderWBChart('nontax_revenue', d, '#8b5cf6')
+  );
+
+  // Layer 4
+  loadChart('military',
+    () => fetchJSON('/api/gdelt?query=%22china%22+%22united+states%22+military&months=24'),
+    d => {
+      if (!Array.isArray(d)) return;
+      const dates = d.map(x => x.date);
+      const vals = d.map(x => x.value);
+      charts['military'] = makeAreaChart(document.getElementById('chart-military'), dates, vals, '#ef4444');
+    }
+  );
+  loadChart('trade_hhi',
+    () => fetchJSON('/api/comtrade?period=2022'),
+    d => {
+      if (!d.top_partners) return;
+      const el = document.getElementById('chart-trade_hhi');
+      const c = echarts.init(el);
+      const t = darkTheme();
+      const partners = d.top_partners.slice(0, 10);
+      c.setOption({
+        grid: { top: 10, right: 10, bottom: 60, left: 46 },
+        xAxis: { ...t.xAxis, type: 'category', data: partners.map(p => p.partner), axisLabel: { ...t.xAxis.axisLabel, rotate: 45 } },
+        yAxis: { ...t.yAxis, type: 'value', axisLabel: { ...t.yAxis.axisLabel, formatter: v => (v * 100).toFixed(1) + '%' } },
+        tooltip: { ...t.tooltip, trigger: 'axis', formatter: p => p[0].name + ': ' + (p[0].value * 100).toFixed(2) + '%' },
+        series: [{ type: 'bar', data: partners.map(p => p.share), itemStyle: { color: '#ef4444' }, barMaxWidth: 30 }],
+      });
+      charts['trade_hhi'] = c;
+      // Update value display with HHI
+      const valEl = document.getElementById('val-trade_hhi');
+      if (valEl && d.hhi) valEl.textContent = d.hhi.toFixed(4);
+      const dateEl = document.getElementById('date-trade_hhi');
+      if (dateEl) dateEl.textContent = d.period;
+    }
+  );
+  loadChart('exchange_rate',
+    () => fetchJSON('/api/fred/DEXCHUS?years=5'),
+    d => renderFREDChart('exchange_rate', d, '#ef4444')
+  );
+}
+
+// ---- Init ----
+async function init() {
+  await Promise.all([loadSignals(), loadAllCharts()]);
+}
+init();
+
+// Auto-refresh every 30 min
+setInterval(() => { loadSignals(); }, 1800000);
+
+// Resize charts on window resize
+window.addEventListener('resize', () => {
+  Object.values(charts).forEach(c => c && c.resize());
+});
+</script>
+</body>
+</html>
