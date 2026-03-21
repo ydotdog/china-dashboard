@@ -488,12 +488,20 @@ function setSignal(key, sig) {
   if (dot) { dot.className = 'card-signal ' + (sig.level || ''); }
   if (val) {
     let v = sig.value;
-    if (typeof v === 'number') {
+    // For GDELT-based indicators, show ratio vs baseline
+    if (sig.ratio !== undefined) {
+      val.textContent = sig.ratio.toFixed(2) + 'x 基线';
+    } else if (typeof v === 'number') {
+      // Add unit suffix for specific indicators
+      const units = { fx_reserves: '万亿$', consumption_gdp: '%', social_security: '%',
+        youth_unemployment: '%', savings_rate: '%', urbanization: '%', nontax_revenue: '%' };
       if (Math.abs(v) >= 1000) v = v.toLocaleString('en', { maximumFractionDigits: 0 });
-      else if (Math.abs(v) < 0.01) v = v.toFixed(6);
+      else if (Math.abs(v) < 0.01) v = v.toFixed(4);
       else v = v.toFixed(2);
+      val.textContent = v + (units[key] ? ' ' + units[key] : '');
+    } else {
+      val.textContent = v;
     }
-    val.textContent = v;
   }
   if (dir && sig.direction) {
     dir.textContent = (DIR_TEXT[sig.direction] || '') + (DIR_ARROW[sig.direction] || '');
