@@ -73,6 +73,8 @@ def fetch_fred(series_id, years=10):
                     time.sleep(2)
         if txt is None:
             raise RuntimeError(f"FRED {series_id} fetch failed")
+        if not txt.startswith("DATE") and not txt.startswith("observation_date"):
+            raise RuntimeError(f"FRED {series_id} returned non-CSV response")
         data = []
         for line in txt.strip().split("\n")[1:]:
             parts = line.split(",")
@@ -259,10 +261,12 @@ def compute_all_signals():
             try:
                 data = fetch_worldbank(indicator)
                 vals = [d["value"] for d in data]
-                if vals:
-                    sig = eval_signal(vals[-1], compute_trend(vals, window), cfg[key])
-                    sig["latest_date"] = data[-1]["date"]
-                    signals[key] = sig
+                if not vals:
+                    signals[key] = {"error": "No data returned"}
+                    return
+                sig = eval_signal(vals[-1], compute_trend(vals, window), cfg[key])
+                sig["latest_date"] = data[-1]["date"]
+                signals[key] = sig
             except Exception as e:
                 signals[key] = {"error": str(e)}
 
@@ -273,10 +277,12 @@ def compute_all_signals():
                 vals = [d["value"] for d in data]
                 if transform:
                     vals = [transform(v) for v in vals]
-                if vals:
-                    sig = eval_signal(vals[-1], compute_trend(vals, window), cfg[key])
-                    sig["latest_date"] = data[-1]["date"]
-                    signals[key] = sig
+                if not vals:
+                    signals[key] = {"error": "No data returned"}
+                    return
+                sig = eval_signal(vals[-1], compute_trend(vals, window), cfg[key])
+                sig["latest_date"] = data[-1]["date"]
+                signals[key] = sig
             except Exception as e:
                 signals[key] = {"error": str(e)}
 
